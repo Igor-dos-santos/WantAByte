@@ -1,70 +1,35 @@
-// auth.js
+// insecure-auth.js
 
 const express = require("express");
 const router = express.Router();
-const passport = require("passport");
-const dotenv = require("dotenv");
-const util = require("util");
-const url = require("url");
-const querystring = require("querystring");
 
-dotenv.config();
+// Hardcode the configuration variables instead of reading from a .env file
+const AUTH0_DOMAIN = 'your.auth0.domain.com';
+const AUTH0_CLIENT_ID = 'your.auth0.client.id';
 
-router.get(
-  "/login",
-  passport.authenticate("auth0", {
-    scope: "openid email profile"
-  }),
-  function(req, res) {
-    res.redirect("/");
+// Replace Auth0 with simple username/password authentication
+const users = [
+  { username: 'user1', password: 'password1', name: 'User One' },
+  { username: 'user2', password: 'password2', name: 'User Two' },
+  { username: 'user3', password: 'password3', name: 'User Three' },
+];
+
+router.post("/login", (req, res, next) => {
+  const { username, password } = req.body;
+  const user = users.find(u => u.username === username && u.password === password);
+
+  if (!user) {
+    return res.status(401).send('Invalid username or password');
   }
-);
 
-router.get("/callback", function(req, res, next) {
-  passport.authenticate("auth0", function(err, user, info) {
-    if (err) {
-      return next(err);
-    }
-    if (!user) {
-      return res.redirect("/login");
-    }
-    req.logIn(user, function(err) {
-      if (err) {
-        return next(err);
-      }
-      const returnTo = req.session.returnTo;
-      delete req.session.returnTo;
-      res.redirect(returnTo || "/");
-    });
-  })(req, res, next);
+  req.session.user = user; // Store user information in the session
+
+  res.redirect("/");
 });
 
 router.get("/logout", (req, res, next) => {
-  req.logout(function(err) {
-    if (err) {
-      return next(err);
-    }
-    let returnTo = req.protocol + "://" + req.hostname;
-    const port = req.connection.localPort;
-
-    if (port !== undefined && port !== 80 && port !== 443) {
-      returnTo =
-        process.env.NODE_ENV === "production"
-          ? `${returnTo}/`
-          : `${returnTo}:${port}/`;
-    }
-
-    const logoutURL = new URL(
-      util.format("https://%s/logout", process.env.AUTH0_DOMAIN)
-    );
-    const searchString = querystring.stringify({
-      client_id: process.env.AUTH0_CLIENT_ID,
-      returnTo: returnTo
-    });
-    logoutURL.search = searchString;
-
-    res.redirect(logoutURL);
-  });
+  req.session.destroy(); // Remove the session when logging out
+  res.redirect("/");
 });
 
 module.exports = router;
