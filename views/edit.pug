@@ -1,0 +1,28 @@
+extends layout
+
+block variables
+  - var title = "Edit Profile | WHATABYTE"
+
+block layout-content
+  div.View.EditView
+    h1.Banner Edit Profile
+    div.Message
+      div.Title
+        h3 Making Us the Best
+        h1 Edit Your Profile
+      span.Details Make changes to your profile below:
+    div.EditForm
+      form(action="/edit", method="POST")
+        label(for="nickname") Nickname:
+        input(type="text", name="nickname", value="#{userProfile.nickname}", required)
+        br
+        label(for="email") Email:
+        input(type="email", name="email", value="#{userProfile.email}", required)
+        br
+        label(for="picture") Picture:
+        input(type="text", name="picture", value="#{userProfile.picture}", required)
+        br
+        button(type="submit") Update
+    div.NavButtons
+      a(href="/logout")
+        div.NavButton Log out
